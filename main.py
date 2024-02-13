@@ -168,6 +168,9 @@ while ret:
     if cv2.waitKey(1) == ord('q'):
         break
 
+# Save the drawing before exiting
+cv2.imwrite('drawing.png', paintWindow)
+
 # release the webcam and destroy all active windows
 cap.release()
 cv2.destroyAllWindows()
