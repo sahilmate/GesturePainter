@@ -43,7 +43,7 @@ cd GesturePainter
 python main.py
 ```
 
-3. Interact with the virtual canvas using your hand gestures.
+3. Interact with the virtual canvas using your hand gestures. Press 'q' key in order to end the process.
 
 ## Contributing
 
