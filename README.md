@@ -1,3 +1,4 @@
+
 # GesturePainter
 
 Welcome to the Gesture Painter project! This Python script utilizes OpenCV, numpy, and MediaPipe to create a virtual painting application that allows you to draw on the screen using hand gestures.
