@@ -59,6 +59,7 @@ We welcome contributions to enhance the functionality and features of this proje
 
 Here are some ideas for future enhancements:
 
+- Ability to save the drawn images
 - Support for additional hand gestures and actions.
 - Improvements to the user interface and canvas.
 - Multi-hand support for collaborative drawing.
