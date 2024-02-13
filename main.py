@@ -1,102 +1,173 @@
+# All the imports go here
 import cv2
-import mediapipe as mp
-import pygame
-import sys
 import numpy as np
+import mediapipe as mp
+from collections import deque
 
-# Initialize Pygame
-pygame.init()
 
-# Constants for screen dimensions
-screen_width, screen_height = 640, 480
+# Giving different arrays to handle colour points of different colour
+bpoints = [deque(maxlen=1024)]
+gpoints = [deque(maxlen=1024)]
+rpoints = [deque(maxlen=1024)]
+ypoints = [deque(maxlen=1024)]
 
-# Create a Pygame window
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Hand Tracking Paint")
 
-# Create a separate surface for the drawings
-drawing_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+# These indexes will be used to mark the points in particular arrays of specific colour
+blue_index = 0
+green_index = 0
+red_index = 0
+yellow_index = 0
 
-# Colors
-white = (255, 255, 255)
+#The kernel to be used for dilation purpose 
+kernel = np.ones((5,5),np.uint8)
 
-# Initialize MediaPipe Hand
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.5, min_tracking_confidence=0.5)
-mp_draw = mp.solutions.drawing_utils
+colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0, 255, 255)]
+colorIndex = 0
 
-# Start capturing video from the webcam
+# Here is code for Canvas setup
+paintWindow = np.zeros((471,636,3)) + 255
+paintWindow = cv2.rectangle(paintWindow, (40,1), (140,65), (0,0,0), 2)
+paintWindow = cv2.rectangle(paintWindow, (160,1), (255,65), (255,0,0), 2)
+paintWindow = cv2.rectangle(paintWindow, (275,1), (370,65), (0,255,0), 2)
+paintWindow = cv2.rectangle(paintWindow, (390,1), (485,65), (0,0,255), 2)
+paintWindow = cv2.rectangle(paintWindow, (505,1), (600,65), (0,255,255), 2)
+
+cv2.putText(paintWindow, "CLEAR", (49, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
+cv2.putText(paintWindow, "BLUE", (185, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
+cv2.putText(paintWindow, "GREEN", (298, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
+cv2.putText(paintWindow, "RED", (420, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
+cv2.putText(paintWindow, "YELLOW", (520, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
+cv2.namedWindow('Paint', cv2.WINDOW_AUTOSIZE)
+
+
+# initialize mediapipe
+mpHands = mp.solutions.hands
+hands = mpHands.Hands(max_num_hands=1, min_detection_confidence=0.7)
+mpDraw = mp.solutions.drawing_utils
+
+
+# Initialize the webcam
 cap = cv2.VideoCapture(0)
-
-# Set the frame rate to 60 FPS
-cap.set(cv2.CAP_PROP_FPS, 60)
-
-# Set the frame width and height
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, screen_width)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, screen_height)
-
-# Variable to store the previous point
-prev_point = None
-
-while True:
-    # Read a frame from the webcam
+ret = True
+while ret:
+    # Read each frame from the webcam
     ret, frame = cap.read()
 
-    # Flip the frame vertically for better visualization
+    x, y, c = frame.shape
+
+    # Flip the frame vertically
     frame = cv2.flip(frame, 1)
+    #hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    framergb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    # Convert the frame color to RGB
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame = cv2.rectangle(frame, (40,1), (140,65), (0,0,0), 2)
+    frame = cv2.rectangle(frame, (160,1), (255,65), (255,0,0), 2)
+    frame = cv2.rectangle(frame, (275,1), (370,65), (0,255,0), 2)
+    frame = cv2.rectangle(frame, (390,1), (485,65), (0,0,255), 2)
+    frame = cv2.rectangle(frame, (505,1), (600,65), (0,255,255), 2)
+    cv2.putText(frame, "CLEAR", (49, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
+    cv2.putText(frame, "BLUE", (185, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
+    cv2.putText(frame, "GREEN", (298, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
+    cv2.putText(frame, "RED", (420, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
+    cv2.putText(frame, "YELLOW", (520, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv2.LINE_AA)
+    #frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
-    # Process the frame with MediaPipe Hands
-    results = hands.process(rgb_frame)
+    # Get hand landmark prediction
+    result = hands.process(framergb)
 
-    # If a hand is detected
-    if results.multi_hand_landmarks:
-        for hand_landmarks in results.multi_hand_landmarks:
-            # Get the coordinates of the index finger tip and middle finger tip
-            index_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
-            middle_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
+    # post process the result
+    if result.multi_hand_landmarks:
+        landmarks = []
+        for handslms in result.multi_hand_landmarks:
+            for lm in handslms.landmark:
+                # # print(id, lm)
+                # print(lm.x)
+                # print(lm.y)
+                lmx = int(lm.x * 640)
+                lmy = int(lm.y * 480)
 
-            # Calculate the distance between the index finger tip and the middle finger tip
-            distance = np.sqrt((index_finger_tip.x - middle_finger_tip.x) ** 2 + (index_finger_tip.y - middle_finger_tip.y) ** 2)
+                landmarks.append([lmx, lmy])
 
-            # If the distance is small, start drawing
-            if distance < 0.05:  # Adjust this threshold as needed
-                x = int(index_finger_tip.x * screen_width)
-                y = int(index_finger_tip.y * screen_height)
 
-                # If this is the first point, just draw a circle
-                if prev_point is None:
-                    pygame.draw.circle(drawing_surface, white, (x, y), 5)
-                else:
-                    # Otherwise, draw a line from the previous point to the current point
-                    pygame.draw.line(drawing_surface, white, prev_point, (x, y), 5)
+            # Drawing landmarks on frames
+            mpDraw.draw_landmarks(frame, handslms, mpHands.HAND_CONNECTIONS)
+        fore_finger = (landmarks[8][0],landmarks[8][1])
+        center = fore_finger
+        thumb = (landmarks[4][0],landmarks[4][1])
+        cv2.circle(frame, center, 3, (0,255,0),-1)
+        print(center[1]-thumb[1])
+        if (thumb[1]-center[1]<30):
+            bpoints.append(deque(maxlen=512))
+            blue_index += 1
+            gpoints.append(deque(maxlen=512))
+            green_index += 1
+            rpoints.append(deque(maxlen=512))
+            red_index += 1
+            ypoints.append(deque(maxlen=512))
+            yellow_index += 1
 
-                # Update the previous point
-                prev_point = (x, y)
-            else:
-                # If the distance is large, stop drawing
-                prev_point = None
+        elif center[1] <= 65:
+            if 40 <= center[0] <= 140: # Clear Button
+                bpoints = [deque(maxlen=512)]
+                gpoints = [deque(maxlen=512)]
+                rpoints = [deque(maxlen=512)]
+                ypoints = [deque(maxlen=512)]
 
-    # Draw the drawing surface onto the Pygame window
-    screen.blit(drawing_surface, (0, 0))
+                blue_index = 0
+                green_index = 0
+                red_index = 0
+                yellow_index = 0
 
-    # Handle Pygame events
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            cap.release()
-            cv2.destroyAllWindows()
-            sys.exit()
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_x:
-            pygame.quit()
-            cap.release()
-            cv2.destroyAllWindows()
-            sys.exit()
+                paintWindow[67:,:,:] = 255
+            elif 160 <= center[0] <= 255:
+                    colorIndex = 0 # Blue
+            elif 275 <= center[0] <= 370:
+                    colorIndex = 1 # Green
+            elif 390 <= center[0] <= 485:
+                    colorIndex = 2 # Red
+            elif 505 <= center[0] <= 600:
+                    colorIndex = 3 # Yellow
+        else :
+            if colorIndex == 0:
+                bpoints[blue_index].appendleft(center)
+            elif colorIndex == 1:
+                gpoints[green_index].appendleft(center)
+            elif colorIndex == 2:
+                rpoints[red_index].appendleft(center)
+            elif colorIndex == 3:
+                ypoints[yellow_index].appendleft(center)
+    # Append the next deques when nothing is detected to avoid messing up
+    else:
+        bpoints.append(deque(maxlen=512))
+        blue_index += 1
+        gpoints.append(deque(maxlen=512))
+        green_index += 1
+        rpoints.append(deque(maxlen=512))
+        red_index += 1
+        ypoints.append(deque(maxlen=512))
+        yellow_index += 1
 
-    # Update the Pygame display
-    pygame.display.flip()
+    # Draw lines of all the colors on the canvas and frame
+    points = [bpoints, gpoints, rpoints, ypoints]
+    # for j in range(len(points[0])):
+    #         for k in range(1, len(points[0][j])):
+    #             if points[0][j][k - 1] is None or points[0][j][k] is None:
+    #                 continue
+    #             cv2.line(paintWindow, points[0][j][k - 1], points[0][j][k], colors[0], 2)
+    for i in range(len(points)):
+        for j in range(len(points[i])):
+            for k in range(1, len(points[i][j])):
+                if points[i][j][k - 1] is None or points[i][j][k] is None:
+                    continue
+                cv2.line(frame, points[i][j][k - 1], points[i][j][k], colors[i], 2)
+                cv2.line(paintWindow, points[i][j][k - 1], points[i][j][k], colors[i], 2)
 
-    # Add a delay to control the frame rate (optional)
-    pygame.time.delay(20)
+    cv2.imshow("Output", frame) 
+    cv2.imshow("Paint", paintWindow)
+
+    if cv2.waitKey(1) == ord('q'):
+        break
+
+# release the webcam and destroy all active windows
+cap.release()
+cv2.destroyAllWindows()
