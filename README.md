@@ -1,46 +1,73 @@
 # GesturePainter
 
-GesturePainter is a hand tracking paint application that allows you to draw on a virtual canvas using your hand gestures. It uses OpenCV for video capture, MediaPipe for hand tracking, and Pygame for rendering the drawing.
+Welcome to the Gesture Painter project! This Python script utilizes OpenCV, numpy, and MediaPipe to create a virtual painting application that allows you to draw on the screen using hand gestures.
+
+## Overview
+
+This virtual painting application recognizes hand gestures captured by your webcam and maps them to different actions, such as changing colors or clearing the canvas. The script uses hand landmarks predicted by MediaPipe to track the position of your hand and fingers in real-time.
+
+## Features
+
+- **Color Options:** Choose from four different colors - blue, green, red, and yellow.
+- **Clear Option:** Clear the canvas with a hand gesture to start fresh.
+- **Real-time Drawing:** Experience real-time drawing on the screen based on your hand movements.
 
 ## Prerequisites
 
-Before you begin, ensure you have met the following requirements:
+Before running the script, ensure you have the following installed:
 
-* You have installed the latest version of Python.
-* You have a Windows/Linux/Mac machine.
-* You have installed the OpenCV, MediaPipe, Pygame, and NumPy libraries. You can install these using pip:
-pip install opencv-python mediapipe pygame numpy
-## Using GesturePainter
+- Python
+- OpenCV
+- NumPy
+- MediaPipe
 
-To use GesturePainter, follow these steps:
+Install the required packages using:
 
-1. Run the script in your Python environment:
-python GesturePainter.py
+```bash
+pip install opencv-python numpy mediapipe
+```
 
-2. Position your hand in front of the webcam. The application will track the position of your index finger.
+## Usage
 
-3. To start drawing, bring your index finger and middle finger close together. The application will draw a line following the movement of your index finger.
+1. Clone the repository:
 
-4. To stop drawing, separate your index finger and middle finger.
+```bash
+git clone https://github.com/sahilmate/GesturePainter.git
+cd GesturePainter
+```
 
-5. To exit the application, press the 'x' key on your keyboard or close the Pygame window.
+2. Run the script:
 
-## Contributing to GesturePainter
+```bash
+python main.py
+```
 
-To contribute to GesturePainter, follow these steps:
+3. Interact with the virtual canvas using your hand gestures.
 
-1. Fork this repository.
-2. Create a branch: `git checkout -b <branch_name>`.
-3. Make your changes and commit them: `git commit -m '<commit_message>'`
-4. Push to the original branch: `git push origin <project_name>/<location>`
-5. Create the pull request.
+## Contributing
 
-Alternatively, see the GitHub documentation on [creating a pull request](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request).
+We welcome contributions to enhance the functionality and features of this project. If you'd like to contribute, please follow these steps:
 
-## Contact
+1. Fork the repository.
+2. Create a new branch for your feature: `git checkout -b feature-new-feature`
+3. Commit your changes: `git commit -m 'Add new feature'`
+4. Push to the branch: `git push origin feature-new-feature`
+5. Open a pull request.
 
-If you want to contact me, you can reach me at any of my socials!
+## Future Enhancements
 
+Here are some ideas for future enhancements:
 
+- Support for additional hand gestures and actions.
+- Improvements to the user interface and canvas.
+- Multi-hand support for collaborative drawing.
 
+Feel free to suggest new features and improvements or contribute to the existing ones!
 
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+```
+Happy drawing! 🎨
+```
